@@ -6,6 +6,7 @@ import numpy as np
 import inspect
 import sys
 
+placing_order = [ "SentryTent", "LogisticsTent","CommunityTent" ,"MedicalTent","MessTent", "RestTent", "K9Tent", "DeconTent"]
 
 class Map:
     def __init__(self, length, breadth, tentList):
@@ -16,6 +17,7 @@ class Map:
         self.deconCluster = []
         self.medicalCluster = []
         self.restCluster = []
+        self.K9Cluster = []
         self.tentList = tentList
         self.uniqueTents = [cls_name for cls_name, cls_obj in inspect.getmembers(sys.modules['tents']) if inspect.isclass(cls_obj)]
         self.tentDict = {}
@@ -38,6 +40,7 @@ class Map:
         tent_to_remove = temp.tentDict[tenttype].pop(0)
         temp.tentList.remove(tent_to_remove)
 
+
         return temp
 
 
@@ -58,17 +61,19 @@ class Map:
 
             input("More Solutions?")
             return True
-        for i in range(self.length):
+
+        for tenttype in placing_order :
             for j in range(self.breadth):
-                for tenttype in self.tentDict:
+                for i in range(self.length):
 
                     if len(self.tentDict[tenttype]) != 0:
-                        print("Here")
-                        print(tenttype)
-                        print(i,j)
-                        if self.tentDict[tenttype][0].place_possible(i, j, self):
 
-                            self.tentDict[tenttype][0].add_to_cluster(i, j, self)
+                        if self.tentDict[tenttype][0].place_possible(i, j, self):
+                            if issubclass( self.tentDict[tenttype][0].__class__, tents.BigClusterTent):
+
+                                self.tentDict[tenttype][0].add_to_cluster(i, j, self)
+
+                            # self.tentDict[tenttype][0].add_to_cluster(i, j, self)
                             self.tentDict[tenttype][0].place(i,j , self.matrix)
                             tempmap = self.next_map(tenttype)
 
@@ -77,8 +82,11 @@ class Map:
 
                             print()
                             tempmap.CSP()
+
                             ## if come out of this recursive call, set to 0 and remove from cluster
                             self.tentDict[tenttype][0].unplace(i,j , self.matrix)
-                            self.tentDict[tenttype][0].remove_from_cluster(i,j,self)
+
+                            if issubclass( self.tentDict[tenttype][0].__class__, tents.BigClusterTent):
+                                self.tentDict[tenttype][0].remove_from_cluster(i,j,self)
 
 

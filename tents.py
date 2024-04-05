@@ -1,6 +1,3 @@
-import maps
-
-
 class GenericTent:
 
     def __init__(self, id, length=1, breadth=1):
@@ -12,7 +9,7 @@ class GenericTent:
     def __str__(self):
         return str(self.id)
 
-    def place_possible(self, x, y, map: maps.Map):
+    def place_possible(self, x, y, map):
         ## too big for the matrix
         if x + self.length > map.length or y + self.breadth > map.breadth:
             return False
@@ -41,8 +38,32 @@ class BigTent(GenericTent):
         super().__init__(id, length, breadth)
 
 
+class LogisticsTent(BigTent):
+    def __init__(self, id, length=4, breadth=4):
+        super().__init__(id, length, breadth)
+
+
+class CommunityTent(BigTent):
+    def __init__(self, id, length=4, breadth=4):
+        super().__init__(id, length, breadth)
+
+
+class SentryTent(BigTent):
+    def __init__(self, id, length=4, breadth=4, entrance_xy: list = None):
+        super().__init__(id, length, breadth)
+        if entrance_xy is None:
+            entrance_xy = [20, 0]
+        self.entrance_xy = entrance_xy
+    def place_possible(self, x, y, map):
+        if not super().place_possible(x ,y ,map):
+            return False
+        if x not in range(self.entrance_xy[0]-1, self.entrance_xy[0] +1) or y not in range(self.entrance_xy[0]-1, self.entrance_xy[0] +1):
+            return False
+        return True
+
+
 class BigClusterTent(BigTent):
-    def getCluster(self, map: maps.Map):
+    def getCluster(self, map):
         return map.messCluster
 
     def condition_sanity(self,
@@ -57,13 +78,13 @@ class BigClusterTent(BigTent):
                         return True
         return False
 
-    def add_to_cluster(self, x, y, map: maps.Map):
+    def add_to_cluster(self, x, y, map):
         self.getCluster(map).append([x, y])
 
-    def remove_from_cluster(self, x, y, map: maps.Map):
+    def remove_from_cluster(self, x, y, map):
         self.getCluster(map).pop()
 
-    def place_possible(self, x, y, map: maps.Map):
+    def place_possible(self, x, y, map):
         if not super().place_possible(x, y, map):
             return False
         if len(self.getCluster(map)) == 0:
@@ -85,68 +106,86 @@ class SmallClusterTent(BigClusterTent):
     def __init__(self, id, length=1, breadth=1):
         super().__init__(id, length, breadth)
 
+
 class MessTent(BigClusterTent):
-    def getCluster(self, map: maps.Map):
+    def getCluster(self, map):
         return map.messCluster
 
 
-class DeconTent(BigClusterTent):
-    def getCluster(self, map: maps.Map):
-        return map.deconCluster
+class MedicalTent(BigClusterTent):
+    def __init__(self, id, length=2, breadth=4):
+        super().__init__(id, length, breadth)
 
+    def getCluster(self, map):
+        return map.medicalCluster
 
 
 class SpacedOutClusterTent(BigClusterTent):
-    def __init__(self, id, length = 4  , breadth = 4):
-        super().__init__(id , length, breadth)
+    def __init__(self, id, length=4, breadth=4):
+        super().__init__(id, length, breadth)
         self.spacing = 4
-        self.cluster_tent_names = ["MedicalTent" ]
+        self.cluster_tent_names = ["DeconTent"]
 
-    def getCluster(self, map: maps.Map):
-        return map.medicalCluster
-    def place_possible(self, x, y,  map: maps.Map, ):
+    def getCluster(self, map):
+        return map.deconCluster
+
+    def place_possible(self, x, y, map, ):
         if not super(SpacedOutClusterTent, self).place_possible(x, y, map):
+            # print("1")
             return False
         ## Cleaniness 4-Metre Rule. Here we take 1 slot in the matrix = 1m^2 in real life
         x_topleft = max(0, x - self.spacing)
         y_topleft = max(0, y - self.spacing)
-        x_btmright = min(x+1+self.length+self.spacing, map.length)
-        y_btmright = min(y+1+self.breadth+self.spacing, map.breadth)
-        for i in range (x_topleft, x_btmright):
+        x_btmright = min(x + 1 + self.length + self.spacing, map.length)
+        y_btmright = min(y + 1 + self.breadth + self.spacing, map.breadth)
+        for i in range(x_topleft, x_btmright):
             for j in range(y_topleft, y_btmright):
+                # print(map.matrix[i][j], type(map.matrix[i][j]))
                 if type(map.matrix[i][j]) == int:
                     if map.matrix[i][j] != 0:
+                        # print("2")
                         return False
                     else:
                         continue
                 else:
 
                     if map.matrix[i][j].tent_type not in self.cluster_tent_names:
+                        # print("3")
                         return False
         return True
 
-class MedicalTent(SpacedOutClusterTent):
 
-    def place_possible(self, x, y, map: maps.Map):
-        return super(MedicalTent, self).place_possible(x,y,map)
+class DeconTent(SpacedOutClusterTent):
+    def getCluster(self, map):
+        return map.deconCluster
+
+    def __init__(self, id, length=4, breadth=4):
+        super().__init__(id, length, breadth)
+        self.spacing = 4
+        self.cluster_tent_names = ["DeconTent"]
+
+    def place_possible(self, x, y, map):
+        return super(DeconTent, self).place_possible(x, y, map)
 
 
 class SpacedOutSmallClusterTent(SpacedOutClusterTent):
     def __init__(self, id, length=1, breadth=1):
         super().__init__(id, length, breadth)
         self.spacing = 2
-        self.cluster_tent_names = ["K9Tent", "RestTent"]
+        self.cluster_tent_names = ["K9Tent"]
 
-    def getCluster(self, map: maps.Map):
+    def getCluster(self, map):
         return map.restCluster
+
 
 class K9Tent(SpacedOutSmallClusterTent):
-    def place_possible(self, x, y,  map: maps.Map):
+    def place_possible(self, x, y, map):
+        return super(K9Tent, self).place_possible(x, y, map)
 
-        return super(K9Tent, self).place_possible(x,y,map)
-    def getCluster(self, map: maps.Map):
-        return map.restCluster
+    def getCluster(self, map):
+        return map.K9Cluster
+
 
 class RestTent(SmallClusterTent):
-    def getCluster(self, map: maps.Map):
+    def getCluster(self, map):
         return map.restCluster
