@@ -52,12 +52,12 @@ class SentryTent(BigTent):
     def __init__(self, id, length=4, breadth=4, entrance_xy: list = None):
         super().__init__(id, length, breadth)
         if entrance_xy is None:
-            entrance_xy = [20, 0]
+            entrance_xy = [20, 11]
         self.entrance_xy = entrance_xy
     def place_possible(self, x, y, map):
         if not super().place_possible(x ,y ,map):
             return False
-        if x not in range(self.entrance_xy[0]-1, self.entrance_xy[0] +1) or y not in range(self.entrance_xy[0]-1, self.entrance_xy[0] +1):
+        if x not in range(self.entrance_xy[0]-self.length, self.entrance_xy[0] + self.length) or y not in range(self.entrance_xy[1]-self.breadth, self.entrance_xy[1] +self.breadth):
             return False
         return True
 
@@ -66,17 +66,16 @@ class BigClusterTent(BigTent):
     def getCluster(self, map):
         return map.messCluster
 
-    def condition_sanity(self,
-                         tents_present: list):  ## Beside each other (vertically or horizontally) the idea is that if x or y is aligned then the other one will be diffed by length
-        for tents in tents_present:
-            if tents.__name__ == 'BigClusterTent':
-                if tents.x == self.x:
-                    if tents.y + self.breadth == self.y or tents.y - self.breadth == self.y:
-                        return True
-                if tents.y == self.y:
-                    if tents.x + self.length == self.x or tents.x - self.length == self.x:
-                        return True
-        return False
+    # def condition_sanity(self,tents_present: list):  ## Beside each other (vertically or horizontally) the idea is that if x or y is aligned then the other one will be diffed by length
+    #     for tents in tents_present:
+    #         if tents.__name__ == 'BigClusterTent':
+    #             if tents.x == self.x:
+    #                 if tents.y + self.breadth == self.y or tents.y - self.breadth == self.y:
+    #                     return True
+    #             if tents.y == self.y:
+    #                 if tents.x + self.length == self.x or tents.x - self.length == self.x:
+    #                     return True
+    #     return False
 
     def add_to_cluster(self, x, y, map):
         self.getCluster(map).append([x, y])

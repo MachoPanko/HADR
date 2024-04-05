@@ -1,12 +1,12 @@
 import copy
 
 import tents
-from global_var import found_solution
+
 import numpy as np
 import inspect
 import sys
 
-placing_order = [ "SentryTent", "LogisticsTent","CommunityTent" ,"MedicalTent","MessTent", "RestTent", "K9Tent", "DeconTent"]
+placing_order = ["SentryTent","MessTent", "LogisticsTent","CommunityTent","MedicalTent" , "RestTent", "K9Tent", "DeconTent"]
 
 class Map:
     def __init__(self, length, breadth, tentList):
@@ -47,9 +47,8 @@ class Map:
 
 
     def CSP(self):
-        global found_solution
-        # if found_solution: COMMENTED OUT TO GET ALL SOLUTIONS,
-        #     return True
+        found_solution = False
+        print(self.tentList)
         if(len(self.tentList) == 0):
             for row in self.printable():
                 print(row)
@@ -57,17 +56,16 @@ class Map:
             print("Mess Cluster: ", self.messCluster)
             print("Decon Cluster: ", self.deconCluster)
             print("Medical Cluster: ", self.medicalCluster)
-            found_solution = True
 
             input("More Solutions?")
             return True
 
         for tenttype in placing_order :
-            for j in range(self.breadth):
-                for i in range(self.length):
+            for i in range(self.length):
+
+                for j in range(self.breadth):
 
                     if len(self.tentDict[tenttype]) != 0:
-
                         if self.tentDict[tenttype][0].place_possible(i, j, self):
                             if issubclass( self.tentDict[tenttype][0].__class__, tents.BigClusterTent):
 
@@ -81,8 +79,10 @@ class Map:
                                 print(row)
 
                             print()
-                            tempmap.CSP()
-
+                            found_solution = tempmap.CSP()
+                            # this is to return one solution only
+                            # if found_solution:
+                            #     return  True
                             ## if come out of this recursive call, set to 0 and remove from cluster
                             self.tentDict[tenttype][0].unplace(i,j , self.matrix)
 
