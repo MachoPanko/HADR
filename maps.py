@@ -7,23 +7,25 @@ import numpy as np
 import inspect
 import sys
 
-placing_order = [ "SentryTent", "LogisticsTent","CommunityTent" ,"MedicalTent","MessTent", "RestTent", "K9Tent", "CleanTent"]
-
+# placing_order = ["SentryTent", "LogisticsTent", "MaintenanceTent", "POLTent", "EnsuiteDuoTent", "CleanTent", "UCCTent",  "CommunityTent", "MedicalTent", "MessTent", "RestTent", "K9Tent"]
 class Map:
-    def __init__(self, length, breadth, tentList , entrance_xy, xy_out_of_bounds):
+    def __init__(self, length, breadth, tentList , entrance_xy, xy_out_of_bounds , placing_order):
         self.entrance_xy = entrance_xy
         self.length = length
         self.breadth = breadth
         self.matrix = np.zeros((length,breadth)).astype(int).tolist()
         self.messCluster = []
+        self.MainPOLCluster = []
         self.cleanCluster = []
         self.medicalCluster = []
         self.restCluster = []
+        self.ensuiteCluster = []
         self.K9Cluster = []
         self.tentList = tentList
         self.uniqueTents = [cls_name for cls_name, cls_obj in inspect.getmembers(sys.modules['tents']) if inspect.isclass(cls_obj)]
         self.tentDict = {}
         self.tentset = set()
+        self.placing_order = placing_order
         for xy in xy_out_of_bounds:
             self.matrix[xy[0]][xy[1]] = -1
             # oob = tents.OutOfBoundsMarker()
@@ -73,7 +75,6 @@ class Map:
 
 
     def CSP(self):
-        global found_solution
         # if found_solution: COMMENTED OUT TO GET ALL SOLUTIONS,
         #     return True
         if(len(self.tentList) == 0):
@@ -92,9 +93,9 @@ class Map:
             found_solution = True
 
             input("More Solutions?")
-            return True
+            return self
 
-        for tenttype in placing_order :
+        for tenttype in self.placing_order :
             for i in range(self.length):
                 for j in range(self.breadth):
 
@@ -122,8 +123,8 @@ class Map:
                             print(self.tentList)
                             found_solution = tempmap.CSP()
                             # Here is return once solution is found, should return a list of coords ah , as fabian requested
-                            # if found_solution :
-                            #     return True
+                            if found_solution :
+                                return found_solution
 
                             ## if come out of this recursive call, set to 0 and remove from cluster
                             self.tentDict[tenttype][0].unplace(i,j , self.matrix)
@@ -131,3 +132,5 @@ class Map:
                             if issubclass( self.tentDict[tenttype][0].__class__, tents.BigClusterTent):
                                 self.tentDict[tenttype][0].remove_from_cluster(i,j,self)
 
+
+        return False

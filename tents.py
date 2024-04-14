@@ -95,6 +95,9 @@ class CommunityTent(BigTent):
     def __init__(self, id, length=4, breadth=4):
         super().__init__(id, length, breadth)
 
+class UCCTent(BigTent):
+    def __init__(self, id, length=4, breadth=4):
+        super().__init__(id, length, breadth)
 
 class SentryTent(BigTent):
     def __init__(self, id, length=4, breadth=4, entrance_xy: list = None):
@@ -159,6 +162,15 @@ class SmallClusterTent(BigClusterTent):
 class MessTent(BigClusterTent):
     def getCluster(self, map):
         return map.messCluster
+
+class MaintenanceTent(BigClusterTent):
+    def getCluster(self, map):
+        return map.MainPOLCluster
+
+
+class POLTent(BigClusterTent):
+    def getCluster(self, map):
+        return map.MainPOLCluster
 
 
 class MedicalTent(BigClusterTent):
@@ -250,3 +262,10 @@ class K9Tent(SpacedOutSmallClusterTent):
 class RestTent(SmallClusterTent):
     def getCluster(self, map):
         return map.restCluster
+
+class EnsuiteDuoTent(SmallClusterTent):
+    def __init__(self, id, length=1, breadth=2):
+        super().__init__(id, length, breadth)
+
+    def getCluster(self, map):
+        return map.ensuiteCluster
