@@ -1,3 +1,28 @@
+class EmptyMarker:
+    def __init__(self):
+        self.length  = 1
+        self.breadth = 1
+        self.tent_type  =  self.__class__.__name__
+        self.id = 0
+
+
+    def __str__(self):
+        return str(self.id)
+
+    def place_possible(self):
+        return True
+
+    def place(self, x, y, matrix):
+        for i in range(self.length):
+            for j in range(self.breadth):
+               matrix[x - i][y + j] = self
+
+    def unplace(self, x, y, matrix):
+        for i in range(self.length):
+            for j in range(self.breadth):
+                matrix[x - i][y + j] = 0
+
+
 class OutOfBoundsMarker:
     def __init__(self):
         self.length  = 1
@@ -13,12 +38,12 @@ class OutOfBoundsMarker:
             for j in range(self.breadth):
                 placeholder = f"{self.tent_type} {self.id}"
                 # matrix[x+i][y+j] = placeholder.ljust(12)
-                matrix[x + i][y + j] = self
+                matrix[x - i][y + j] = self
 
     def unplace(self, x, y, matrix):
         for i in range(self.length):
             for j in range(self.breadth):
-                matrix[x + i][y + j] = 0
+                matrix[x - i][y + j] = 0
 
 
 
@@ -35,22 +60,26 @@ class GenericTent:
         return str(self.id)
 
     def place_possible(self, x, y, map):
-        ## too big for the matrix
 
-        if x + self.length > map.length or y + self.breadth > map.breadth:
+        if self.tent_type in map.heuristic_matrix[x][y]:
+            return False
+        ## too big for the matrix
+        if x - self.length < 0 or y + self.breadth > map.breadth:
             return False
         ## too big for given space
         for i in range(self.length):
             for j in range(self.breadth):
-                if map.matrix[x + i][y + j] != 0:  ## True equates to square already occupied
+                if map.matrix[x - i][y + j] != 0:  ## True equates to square already occupied
                     # print("no way")
                     return False
-        x_topleft = max(0, x - self.spacing)
+
+        x_topleft = max(0, x  - self.length- self.spacing)
         y_topleft = max(0, y - self.spacing)
-        x_btmright = min(x + 1 + self.length + self.spacing, map.length)
-        y_btmright = min(y + 1 + self.breadth + self.spacing, map.breadth)
+        x_btmright = min(x + self.spacing, map.length)
+        y_btmright = min(y  + self.breadth+  self.spacing, map.breadth)
         # print(self.tent_type)
         # spacing for walking / spaciousness
+
         for i in range(x_topleft, x_btmright):
             for j in range(y_topleft, y_btmright):
                 # print(map.matrix[i][j], type(map.matrix[i][j]))
@@ -66,19 +95,24 @@ class GenericTent:
 
                     if map.matrix[i][j].tent_type != self.tent_type:
                         return False
+
         return True
 
-    def place(self, x, y, matrix):
+    def place(self, x, y, map):
+        map.btm_left_xy.append([x, y,self.tent_type])
         for i in range(self.length):
             for j in range(self.breadth):
                 placeholder = f"{self.tent_type} {self.id}"
                 # matrix[x+i][y+j] = placeholder.ljust(12)
-                matrix[x + i][y + j] = self
+                map.matrix[x - i][y + j] = self
+        map.heuristic_matrix[x][y].add(self.tent_type)
 
-    def unplace(self, x, y, matrix):
+
+    def unplace(self, x, y, map):
+        map.btm_left_xy.remove([x, y,self.tent_type])
         for i in range(self.length):
             for j in range(self.breadth):
-                matrix[x + i][y + j] = 0
+                map.matrix[x - i][y + j] = 0
 
 
 class BigTent(GenericTent):
@@ -195,10 +229,11 @@ class SpacedOutClusterTent(BigClusterTent):
             # print("1")
             return False
         ## Cleanliness 4-Metre Rule. Here we take 1 slot in the matrix = 1m^2 in real life
-        x_topleft = max(0, x - self.clusterspacing)
+        x_topleft = max(0, x -  self.length - self.clusterspacing)
         y_topleft = max(0, y - self.clusterspacing)
-        x_btmright = min(x + 1 + self.length + self.clusterspacing, map.length)
-        y_btmright = min(y + 1 + self.breadth + self.clusterspacing, map.breadth)
+        x_btmright = min(x  + self.clusterspacing, map.length)
+        y_btmright = min(y  + self.breadth + self.clusterspacing, map.breadth)
+
         for i in range(x_topleft, x_btmright):
             for j in range(y_topleft, y_btmright):
                 # print(map.matrix[i][j], type(map.matrix[i][j]))
